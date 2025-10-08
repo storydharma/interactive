@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta-viewport="width=device-width, initial-scale=1.0">
+    <title>Interactive Quiz App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        html, body {
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 font-sans">
+    <!-- Hero section (larger) with gradient background -->
+    <header class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white shadow-md" style="height:25vh">
+        <div class="max-w-5xl mx-auto px-8 h-full flex items-center gap-6">
+            <!-- image column: take roughly 50% width -->
+            <div class="w-1/2 flex items-center h-full">
+                <div class="h-full w-full flex items-center justify-center">
+                    <img src="images/2.png" alt="Vetal" class="max-w-full h-full w-auto object-contain" />
+                </div>
+            </div>
+            <!-- text column: take the remaining width -->
+            <div class="w-1/2">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow">Dharmic Puzzles - Solve them if you can</h1>
+                <p class="text-indigo-100 mt-2 text-base md:text-lg">Short puzzles inspired by nīti and rājadharma.</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="min-h-full flex">
+        <!-- Left Panel - Question and Buttons -->
+        <div class="w-1/2 p-8 bg-white shadow-lg">
+            <div class="max-w-lg mx-auto">
+                <div class="mb-6">
+                    <span id="questionNumber" class="inline-block bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-semibold mb-4">Question 1</span>
+                    <h1 id="questionText" class="text-2xl font-bold text-gray-800 leading-relaxed">
+                        Loading question...
+                    </h1>
+                </div>
+                
+                <div class="space-y-4">
+                    <button onclick="showAnswer('Yes')" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 text-lg">
+                        Yes
+                    </button>
+                    <button onclick="showAnswer('No')" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 text-lg">
+                        No
+                    </button>
+                    <button onclick="showAnswer('Maybe')" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 text-lg">
+                        Maybe
+                    </button>
+                    <button onclick="showAnswer('Cannot say')" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 text-lg">
+                        Cannot say
+                    </button>
+                </div>
+                
+
+            </div>
+        </div>
+        
+        <!-- Right Panel - Answer Display -->
+        <div class="w-1/2 p-8 bg-gray-50">
+            <div class="max-w-2xl mx-auto">
+                <div id="answerPanel" class="hidden">
+                    <div class="mb-6">
+                        <div class="flex items-center mb-4">
+                            <span id="selectedAnswer" class="bg-indigo-500 text-white px-4 py-2 rounded-lg font-semibold text-lg"></span>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-800 mb-4">Detailed Explanation:</h2>
+                    </div>
+                    <div id="answerContent" class="prose prose-lg text-gray-700 leading-relaxed space-y-4">
+                        <!-- Answer content will be inserted here -->
+                    </div>
+                </div>
+                
+                <div id="welcomePanel" class="text-center py-16">
+                    <div class="text-6xl mb-6">🤔</div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Ready to Start?</h2>
+                    <p class="text-gray-600 text-lg">Click any answer button to see the detailed explanation for this question.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // We'll load questions from data/qa.json (array of { question, answer })
+        const questionsData = {};
+        let totalQuestions = 0;
+        let currentQuestionNumber = 1;
+
+        function getQueryParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        function loadQuestion() {
+            const questionParam = getQueryParameter('question');
+            if (questionParam) {
+                const paramValue = parseInt(questionParam);
+                if (paramValue >= 1 && paramValue <= totalQuestions) {
+                    currentQuestionNumber = paramValue;
+                }
+            }
+
+            const questionData = questionsData[currentQuestionNumber];
+            if (questionData) {
+                document.getElementById('questionNumber').textContent = `Question ${currentQuestionNumber}`;
+                document.getElementById('questionText').textContent = questionData.question;
+                // optional element 'currentQ' may not exist in this layout; guard it
+                const currentQEl = document.getElementById('currentQ');
+                if (currentQEl) currentQEl.textContent = currentQuestionNumber;
+            } else {
+                document.getElementById('questionNumber').textContent = 'Question';
+                document.getElementById('questionText').textContent = 'Loading question...';
+            }
+
+            // Reset answer panel
+            document.getElementById('answerPanel').classList.add('hidden');
+            document.getElementById('welcomePanel').classList.remove('hidden');
+        }
+
+        function showAnswer(selectedOption) {
+            const questionData = questionsData[currentQuestionNumber];
+            if (!questionData) return;
+
+            // qa.json uses an 'answer' field (long form). Fall back to answers.Yes if present.
+            const answer = questionData.answer || (questionData.answers && questionData.answers["Yes"]) || 'No explanation available.';
+
+            document.getElementById('selectedAnswer').textContent = "Your choice: " + selectedOption;
+
+            // Format answer with paragraphs
+            const paragraphs = answer.split('\n\n');
+            const formattedAnswer = paragraphs.map(p => `<p>${p}</p>`).join('');
+            document.getElementById('answerContent').innerHTML = formattedAnswer;
+
+            document.getElementById('welcomePanel').classList.add('hidden');
+            document.getElementById('answerPanel').classList.remove('hidden');
+        }
+
+        function navigateQuestion(direction) {
+            const newQuestionNumber = currentQuestionNumber + direction;
+            if (newQuestionNumber >= 1 && newQuestionNumber <= totalQuestions) {
+                currentQuestionNumber = newQuestionNumber;
+
+                // Update URL without page reload
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('question', currentQuestionNumber);
+                window.history.pushState({}, '', newUrl);
+
+                loadQuestion();
+            }
+        }
+
+        // Fetch questions from JSON file and initialize
+        async function fetchQuestions() {
+            try {
+                const res = await fetch('data/qa.json');
+                if (!res.ok) throw new Error('Failed to fetch questions');
+                const arr = await res.json();
+
+                // Map array into 1-based index object to preserve existing logic
+                arr.forEach((item, idx) => {
+                    const i = idx + 1;
+                    questionsData[i] = {
+                        question: item.question || (`Question ${i}`),
+                        answer: item.answer || item.answers || ''
+                    };
+                });
+
+                totalQuestions = arr.length;
+
+                // If there's a question query param, load it; otherwise show first
+                const questionParam = getQueryParameter('question');
+                if (questionParam) {
+                    const paramValue = parseInt(questionParam);
+                    if (paramValue >= 1 && paramValue <= totalQuestions) currentQuestionNumber = paramValue;
+                }
+
+                loadQuestion();
+            } catch (err) {
+                console.error('Error loading questions:', err);
+                // Show fallback message
+                document.getElementById('questionText').textContent = 'Failed to load questions.';
+            }
+        }
+
+        fetchQuestions();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98b3071060409146',t:'MTc1OTg5OTEzMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
